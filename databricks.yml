@@ -1,0 +1,27 @@
+# Databricks Asset Bundle (DAB) Configuration
+# Deploy via CLI: databricks bundle deploy -t dev
+bundle:
+  name: ops_medallion_complete_lakehouse
+
+resources:
+  pipelines:
+    ops_medallion_dlt:
+      name: "OPS Medallion Pipeline (Bronze -> Silver -> Gold)"
+      catalog: ops
+      target: silver
+      serverless: true
+      libraries:
+        - notebook:
+            path: ./02_pipeline_dlt_bronze_to_gold.sql
+
+  jobs:
+    ops_medallion_2hr_schedule:
+      name: "OPS Medallion Pipeline - Run Every 2 Hours"
+      schedule:
+        quartz_cron_expression: "0 0 */2 * * ?"
+        timezone_id: "UTC"
+        pause_status: UNPAUSED
+      tasks:
+        - task_key: medallion_bronze_silver_gold
+          pipeline_task:
+            pipeline_id: ${resources.pipelines.ops_medallion_dlt.id}
