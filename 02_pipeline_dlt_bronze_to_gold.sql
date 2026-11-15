@@ -1,10 +1,11 @@
 -- Databricks notebook source
--- MAGIC %md
--- MAGIC # Step 2A: Lakeflow Declarative Pipeline (Delta Live Tables): Bronze -> Silver -> Gold
--- MAGIC **Catalog:** `ops` | **Target Schemas:** `silver` & `gold`
--- MAGIC
--- MAGIC This declarative pipeline incrementally transforms `ops.bronze` -> `ops.silver` -> `ops.gold` with Data Quality Expectations.
--- MAGIC Run `04_deploy_and_schedule_pipeline.py` to automatically register and schedule this pipeline every 2 hours.
+-- DBTITLE 1,Medallion DDL: Bronze -> Silver -> Gold
+-- Step 2A: Lakeflow Declarative Pipeline (Delta Live Tables): Bronze -> Silver -> Gold
+-- Catalog: ops | Target Schemas: silver & gold
+--
+-- This declarative pipeline incrementally transforms ops.bronze -> ops.silver -> ops.gold
+-- with Data Quality Expectations. Run 04_deploy_and_schedule_pipeline to automatically
+-- register and schedule this pipeline every 2 hours.
 
 -- ============================================================================
 -- LAYER 1 -> 2: BRONZE TO SILVER (STREAMING TABLES + QUALITY EXPECTATIONS)
@@ -16,21 +17,26 @@ CREATE OR REFRESH STREAMING TABLE ops.silver.customers_cleaned (
 )
 COMMENT 'Silver: Cleansed and standardized customer records streamed from ops.bronze.customers_raw'
 AS
+WITH latest AS (
+  -- Streaming-safe deduplication: ROW_NUMBER() windows are not supported over
+  -- streaming sources, so the most recently ingested record per customer_id is
+  -- selected with MAX(struct(...)) + GROUP BY (same semantics as the original
+  -- ROW_NUMBER ... ORDER BY _ingest_timestamp DESC = 1).
+  SELECT MAX(STRUCT(_ingest_timestamp, raw_json)) AS rec
+  FROM STREAM(ops.bronze.customers_raw)
+  GROUP BY get_json_object(raw_json, '$.customer_id')
+)
 SELECT
-  get_json_object(raw_json, '$.customer_id') AS customer_id,
-  INITCAP(TRIM(get_json_object(raw_json, '$.full_name'))) AS customer_name,
-  COALESCE(LOWER(TRIM(get_json_object(raw_json, '$.email'))), 'missing_email@unknown.local') AS email,
-  INITCAP(TRIM(get_json_object(raw_json, '$.city'))) AS city,
-  TRIM(get_json_object(raw_json, '$.country')) AS country,
-  TRIM(get_json_object(raw_json, '$.segment')) AS segment,
-  TRIM(get_json_object(raw_json, '$.account_id')) AS account_id,
-  CAST(get_json_object(raw_json, '$.signup_date') AS DATE) AS signup_date,
-  _ingest_timestamp AS last_updated_ts
-FROM STREAM(ops.bronze.customers_raw)
-QUALIFY ROW_NUMBER() OVER (
-  PARTITION BY get_json_object(raw_json, '$.customer_id')
-  ORDER BY _ingest_timestamp DESC
-) = 1;
+  get_json_object(rec.raw_json, '$.customer_id') AS customer_id,
+  INITCAP(TRIM(get_json_object(rec.raw_json, '$.full_name'))) AS customer_name,
+  COALESCE(LOWER(TRIM(get_json_object(rec.raw_json, '$.email'))), 'missing_email@unknown.local') AS email,
+  INITCAP(TRIM(get_json_object(rec.raw_json, '$.city'))) AS city,
+  TRIM(get_json_object(rec.raw_json, '$.country')) AS country,
+  TRIM(get_json_object(rec.raw_json, '$.segment')) AS segment,
+  TRIM(get_json_object(rec.raw_json, '$.account_id')) AS account_id,
+  CAST(get_json_object(rec.raw_json, '$.signup_date') AS DATE) AS signup_date,
+  rec._ingest_timestamp AS last_updated_ts
+FROM latest;
 
 CREATE OR REFRESH STREAMING TABLE ops.silver.transactions_cleaned (
   CONSTRAINT valid_tx_id        EXPECT (transaction_id IS NOT NULL) ON VIOLATION DROP ROW,
@@ -39,27 +45,31 @@ CREATE OR REFRESH STREAMING TABLE ops.silver.transactions_cleaned (
 )
 COMMENT 'Silver: Deduplicated valid COMPLETED transactions streamed from ops.bronze.transactions_raw'
 AS
+WITH first_seen AS (
+  -- Streaming-safe deduplication: keep the earliest ingested record per
+  -- transaction_id (same semantics as the original ROW_NUMBER ... ORDER BY
+  -- _ingest_timestamp ASC = 1), using MIN(struct(...)) + GROUP BY.
+  SELECT MIN(STRUCT(_ingest_timestamp, raw_payload)) AS rec
+  FROM STREAM(ops.bronze.transactions_raw)
+  WHERE raw_payload IS NOT NULL
+  GROUP BY get_json_object(raw_payload, '$.tx_id')
+)
 SELECT
-  get_json_object(raw_payload, '$.tx_id') AS transaction_id,
-  get_json_object(raw_payload, '$.c_id') AS customer_id,
-  get_json_object(raw_payload, '$.prod_id') AS product_id,
-  TRIM(get_json_object(raw_payload, '$.prod_name')) AS product_name,
-  TRIM(get_json_object(raw_payload, '$.category')) AS product_category,
-  CAST(get_json_object(raw_payload, '$.qty') AS INT) AS quantity,
-  CAST(get_json_object(raw_payload, '$.unit_price') AS DECIMAL(10,2)) AS unit_price_usd,
-  CAST(get_json_object(raw_payload, '$.amt') AS DECIMAL(12,2)) AS amount_usd,
-  UPPER(TRIM(get_json_object(raw_payload, '$.curr'))) AS currency,
-  TRIM(get_json_object(raw_payload, '$.channel')) AS sales_channel,
-  TRIM(get_json_object(raw_payload, '$.store')) AS store_location,
-  CAST(get_json_object(raw_payload, '$.ts') AS TIMESTAMP) AS transaction_ts,
-  DATE(CAST(get_json_object(raw_payload, '$.ts') AS TIMESTAMP)) AS transaction_date,
-  UPPER(TRIM(get_json_object(raw_payload, '$.st'))) AS status
-FROM STREAM(ops.bronze.transactions_raw)
-WHERE raw_payload IS NOT NULL
-QUALIFY ROW_NUMBER() OVER (
-  PARTITION BY get_json_object(raw_payload, '$.tx_id')
-  ORDER BY _ingest_timestamp ASC
-) = 1;
+  get_json_object(rec.raw_payload, '$.tx_id') AS transaction_id,
+  get_json_object(rec.raw_payload, '$.c_id') AS customer_id,
+  get_json_object(rec.raw_payload, '$.prod_id') AS product_id,
+  TRIM(get_json_object(rec.raw_payload, '$.prod_name')) AS product_name,
+  TRIM(get_json_object(rec.raw_payload, '$.category')) AS product_category,
+  CAST(get_json_object(rec.raw_payload, '$.qty') AS INT) AS quantity,
+  CAST(get_json_object(rec.raw_payload, '$.unit_price') AS DECIMAL(10,2)) AS unit_price_usd,
+  CAST(get_json_object(rec.raw_payload, '$.amt') AS DECIMAL(12,2)) AS amount_usd,
+  UPPER(TRIM(get_json_object(rec.raw_payload, '$.curr'))) AS currency,
+  TRIM(get_json_object(rec.raw_payload, '$.channel')) AS sales_channel,
+  TRIM(get_json_object(rec.raw_payload, '$.store')) AS store_location,
+  CAST(get_json_object(rec.raw_payload, '$.ts') AS TIMESTAMP) AS transaction_ts,
+  DATE(CAST(get_json_object(rec.raw_payload, '$.ts') AS TIMESTAMP)) AS transaction_date,
+  UPPER(TRIM(get_json_object(rec.raw_payload, '$.st'))) AS status
+FROM first_seen;
 
 CREATE OR REFRESH MATERIALIZED VIEW ops.silver.customer_transactions
 COMMENT 'Silver: Enriched customer transaction history joining customers_cleaned and transactions_cleaned'
@@ -92,42 +102,50 @@ CREATE OR REFRESH STREAMING TABLE ops.silver.accounts_cleaned (
 )
 COMMENT 'Silver: Standardized Salesforce accounts'
 AS
+WITH latest AS (
+  -- Streaming-safe deduplication: latest ingested record per account_id
+  -- via MAX(struct(...)) + GROUP BY.
+  SELECT MAX(STRUCT(_ingest_timestamp, sf_account_id, account_name, industry,
+                    annual_revenue_raw, account_tier, region, owner_name)) AS rec
+  FROM STREAM(ops.bronze.accounts_raw)
+  GROUP BY TRIM(sf_account_id)
+)
 SELECT
-  TRIM(sf_account_id) AS account_id,
-  TRIM(account_name) AS account_name,
-  TRIM(industry) AS industry,
-  CAST(annual_revenue_raw AS DECIMAL(15,2)) AS annual_revenue_usd,
-  TRIM(account_tier) AS account_tier,
-  UPPER(TRIM(region)) AS region,
-  TRIM(owner_name) AS account_owner
-FROM STREAM(ops.bronze.accounts_raw)
-QUALIFY ROW_NUMBER() OVER (
-  PARTITION BY TRIM(sf_account_id)
-  ORDER BY _ingest_timestamp DESC
-) = 1;
+  TRIM(rec.sf_account_id) AS account_id,
+  TRIM(rec.account_name) AS account_name,
+  TRIM(rec.industry) AS industry,
+  CAST(rec.annual_revenue_raw AS DECIMAL(15,2)) AS annual_revenue_usd,
+  TRIM(rec.account_tier) AS account_tier,
+  UPPER(TRIM(rec.region)) AS region,
+  TRIM(rec.owner_name) AS account_owner
+FROM latest;
 
 CREATE OR REFRESH STREAMING TABLE ops.silver.opportunities_cleaned (
   CONSTRAINT valid_opp_id EXPECT (opportunity_id IS NOT NULL) ON VIOLATION DROP ROW
 )
 COMMENT 'Silver: Validated Salesforce opportunities with weighted pipeline values'
 AS
+WITH latest AS (
+  -- Streaming-safe deduplication: latest ingested record per opportunity_id
+  -- via MAX(struct(...)) + GROUP BY.
+  SELECT MAX(STRUCT(_ingest_timestamp, sf_opp_id, sf_account_id, opp_name, stage_name,
+                    amount_raw, probability_pct, close_date, days_in_stage)) AS rec
+  FROM STREAM(ops.bronze.opportunities_raw)
+  GROUP BY TRIM(sf_opp_id)
+)
 SELECT
-  TRIM(sf_opp_id) AS opportunity_id,
-  TRIM(sf_account_id) AS account_id,
-  TRIM(opp_name) AS opportunity_name,
-  TRIM(stage_name) AS stage_name,
-  CAST(amount_raw AS DECIMAL(12,2)) AS amount_usd,
-  probability_pct,
-  ROUND(CAST(amount_raw AS DECIMAL(12,2)) * (probability_pct / 100.0), 2) AS weighted_amount_usd,
-  CAST(close_date AS DATE) AS close_date,
-  days_in_stage,
-  CASE WHEN stage_name = 'Closed Won' THEN 1 ELSE 0 END AS is_won,
-  CASE WHEN stage_name IN ('Closed Won', 'Closed Lost') THEN 1 ELSE 0 END AS is_closed
-FROM STREAM(ops.bronze.opportunities_raw)
-QUALIFY ROW_NUMBER() OVER (
-  PARTITION BY TRIM(sf_opp_id)
-  ORDER BY _ingest_timestamp DESC
-) = 1;
+  TRIM(rec.sf_opp_id) AS opportunity_id,
+  TRIM(rec.sf_account_id) AS account_id,
+  TRIM(rec.opp_name) AS opportunity_name,
+  TRIM(rec.stage_name) AS stage_name,
+  CAST(rec.amount_raw AS DECIMAL(12,2)) AS amount_usd,
+  rec.probability_pct,
+  ROUND(CAST(rec.amount_raw AS DECIMAL(12,2)) * (rec.probability_pct / 100.0), 2) AS weighted_amount_usd,
+  CAST(rec.close_date AS DATE) AS close_date,
+  rec.days_in_stage,
+  CASE WHEN rec.stage_name = 'Closed Won' THEN 1 ELSE 0 END AS is_won,
+  CASE WHEN rec.stage_name IN ('Closed Won', 'Closed Lost') THEN 1 ELSE 0 END AS is_closed
+FROM latest;
 
 CREATE OR REFRESH MATERIALIZED VIEW ops.silver.account_opportunities
 COMMENT 'Silver: Enriched B2B account opportunities joining accounts_cleaned and opportunities_cleaned'
@@ -159,21 +177,25 @@ CREATE OR REFRESH STREAMING TABLE ops.silver.leads_cleaned (
 )
 COMMENT 'Silver: Cleaned active marketing and sales leads'
 AS
+WITH latest AS (
+  -- Streaming-safe deduplication: latest ingested record per lead_id
+  -- via MAX(struct(...)) + GROUP BY.
+  SELECT MAX(STRUCT(_ingest_timestamp, sf_lead_id, lead_name, company_name, email,
+                    lead_source, status, estimated_budget_raw, region, created_date)) AS rec
+  FROM STREAM(ops.bronze.leads_raw)
+  GROUP BY TRIM(sf_lead_id)
+)
 SELECT
-  TRIM(sf_lead_id) AS lead_id,
-  INITCAP(TRIM(lead_name)) AS lead_name,
-  TRIM(company_name) AS company_name,
-  COALESCE(LOWER(TRIM(email)), 'no_email@lead.local') AS email,
-  TRIM(lead_source) AS lead_source,
-  TRIM(status) AS lead_status,
-  CAST(estimated_budget_raw AS DECIMAL(12,2)) AS estimated_budget_usd,
-  UPPER(TRIM(region)) AS region,
-  CAST(created_date AS DATE) AS created_date
-FROM STREAM(ops.bronze.leads_raw)
-QUALIFY ROW_NUMBER() OVER (
-  PARTITION BY TRIM(sf_lead_id)
-  ORDER BY _ingest_timestamp DESC
-) = 1;
+  TRIM(rec.sf_lead_id) AS lead_id,
+  INITCAP(TRIM(rec.lead_name)) AS lead_name,
+  TRIM(rec.company_name) AS company_name,
+  COALESCE(LOWER(TRIM(rec.email)), 'no_email@lead.local') AS email,
+  TRIM(rec.lead_source) AS lead_source,
+  TRIM(rec.status) AS lead_status,
+  CAST(rec.estimated_budget_raw AS DECIMAL(12,2)) AS estimated_budget_usd,
+  UPPER(TRIM(rec.region)) AS region,
+  CAST(rec.created_date AS DATE) AS created_date
+FROM latest;
 
 -- ============================================================================
 -- LAYER 2 -> 3: SILVER TO GOLD (MATERIALIZED VIEWS FOR BI & AI)

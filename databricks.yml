@@ -12,7 +12,7 @@ resources:
       serverless: true
       libraries:
         - notebook:
-            path: ./02_pipeline_dlt_bronze_to_gold.sql
+            path: ./02_pipeline_dlt_bronze_to_gold
 
   jobs:
     ops_medallion_2hr_schedule:

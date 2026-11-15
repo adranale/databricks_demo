@@ -1,4 +1,8 @@
 # Databricks notebook source
+# /// script
+# [tool.databricks.environment]
+# environment_version = "6"
+# ///
 # MAGIC %md
 # MAGIC # Step 3: Automated Pipeline Deployment & 2-Hour Scheduler (`databricks-sdk`)
 # MAGIC Run this notebook (`Run all`) after Step 1 to automatically create:
@@ -12,7 +16,7 @@ from databricks.sdk.service import pipelines, jobs
 
 w = WorkspaceClient()
 current_user = w.current_user.me().user_name
-workspace_folder = f"/Users/{current_user}"
+workspace_folder = f"/Users/{current_user}/databricks_demo"
 
 dlt_notebook_path = f"{workspace_folder}/02_pipeline_dlt_bronze_to_gold"
 merge_notebook_path = f"{workspace_folder}/03_pipeline_sql_merge_bronze_to_gold"
