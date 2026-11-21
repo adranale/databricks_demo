@@ -26,6 +26,17 @@ COMMENT 'Gold Layer: Curated business KPIs, BI aggregates, and AI/ML feature tab
 
 -- COMMAND ----------
 
+-- DBTITLE 1,Step 0B: Landing volume for file-based sources
+-- ============================================================================
+-- STEP 0B: LANDING VOLUME FOR FILE-BASED SOURCES
+-- (semi-structured JSON product catalogs + unstructured product images/PDFs)
+-- Sample files are generated into this volume separately (demo data generation).
+-- ============================================================================
+CREATE VOLUME IF NOT EXISTS ops.bronze.ingest
+COMMENT 'Landing volume for file-based demo sources: JSON product catalog (semi-structured) and product images/PDF catalogs (unstructured)';
+
+-- COMMAND ----------
+
 -- ============================================================================
 -- STEP 1: BRONZE LAYER (RAW TABLES & SAMPLE INGESTION DATA)
 -- ============================================================================

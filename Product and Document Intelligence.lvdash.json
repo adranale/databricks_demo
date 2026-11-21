@@ -1,0 +1,726 @@
+{
+  "datasets": [
+    {
+      "name": "product_metrics",
+      "displayName": "Product Performance (Gold)",
+      "config": {
+        "version": "1.1",
+        "source": "ops.gold.product_performance",
+        "dimensions": [
+          {
+            "name": "Product ID",
+            "expr": "product_id"
+          },
+          {
+            "name": "Product Name",
+            "expr": "product_name"
+          },
+          {
+            "name": "Category",
+            "expr": "product_category"
+          },
+          {
+            "name": "Brand",
+            "expr": "brand"
+          },
+          {
+            "name": "Status",
+            "expr": "product_status"
+          },
+          {
+            "name": "Performance",
+            "expr": "sales_performance"
+          }
+        ],
+        "measures": [
+          {
+            "name": "Revenue",
+            "expr": "SUM(realized_revenue_usd)",
+            "format": {
+              "type": "currency",
+              "currencyCode": "USD",
+              "decimalPlaces": {
+                "type": "exact",
+                "places": 2.0
+              }
+            }
+          },
+          {
+            "name": "Units Sold",
+            "expr": "SUM(units_sold)"
+          },
+          {
+            "name": "Orders",
+            "expr": "SUM(orders_count)"
+          },
+          {
+            "name": "Products",
+            "expr": "COUNT(product_id)"
+          },
+          {
+            "name": "Avg List Price",
+            "expr": "AVG(list_price_usd)",
+            "format": {
+              "type": "currency",
+              "currencyCode": "USD",
+              "decimalPlaces": {
+                "type": "exact",
+                "places": 0.0
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "document_metrics",
+      "displayName": "Document Intelligence (Gold)",
+      "config": {
+        "version": "1.1",
+        "source": "ops.gold.document_intelligence_summary",
+        "dimensions": [
+          {
+            "name": "Document",
+            "expr": "source_file"
+          },
+          {
+            "name": "Doc Type",
+            "expr": "doc_type"
+          }
+        ],
+        "measures": [
+          {
+            "name": "Documents",
+            "expr": "COUNT(source_file)"
+          },
+          {
+            "name": "Extracted Text",
+            "expr": "SUM(extracted_text_chars)"
+          },
+          {
+            "name": "Elements",
+            "expr": "SUM(element_count)"
+          },
+          {
+            "name": "Pages",
+            "expr": "SUM(page_count)"
+          }
+        ]
+      }
+    }
+  ],
+  "pages": [
+    {
+      "name": "product_ai_page",
+      "displayName": "Product & Document Intelligence",
+      "layout": [
+        {
+          "widget": {
+            "name": "counter_total_revenue",
+            "queries": [
+              {
+                "name": "main",
+                "query": {
+                  "datasetName": "product_metrics",
+                  "fields": [
+                    {
+                      "name": "revenue",
+                      "expression": "MEASURE(`Revenue`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "counter",
+              "frame": {
+                "title": "Total Realized Revenue",
+                "showTitle": true
+              },
+              "encodings": {
+                "value": {
+                  "fieldName": "revenue",
+                  "displayName": "Revenue",
+                  "format": {
+                    "type": "number-currency",
+                    "currencyCode": "USD",
+                    "abbreviation": "compact",
+                    "decimalPlaces": {
+                      "type": "max",
+                      "places": 1
+                    }
+                  }
+                }
+              },
+              "data": {
+                "queryName": "main"
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 0,
+            "width": 3,
+            "height": 3
+          }
+        },
+        {
+          "widget": {
+            "name": "counter_products",
+            "queries": [
+              {
+                "name": "main",
+                "query": {
+                  "datasetName": "product_metrics",
+                  "fields": [
+                    {
+                      "name": "products",
+                      "expression": "MEASURE(`Products`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "counter",
+              "frame": {
+                "title": "Products in Catalog",
+                "showTitle": true
+              },
+              "encodings": {
+                "value": {
+                  "fieldName": "products",
+                  "displayName": "Products",
+                  "format": {
+                    "type": "number-plain",
+                    "abbreviation": "none",
+                    "decimalPlaces": {
+                      "type": "max",
+                      "places": 0
+                    }
+                  }
+                }
+              },
+              "data": {
+                "queryName": "main"
+              }
+            }
+          },
+          "position": {
+            "x": 3,
+            "y": 0,
+            "width": 3,
+            "height": 3
+          }
+        },
+        {
+          "widget": {
+            "name": "counter_documents",
+            "queries": [
+              {
+                "name": "main",
+                "query": {
+                  "datasetName": "document_metrics",
+                  "fields": [
+                    {
+                      "name": "documents",
+                      "expression": "MEASURE(`Documents`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "counter",
+              "frame": {
+                "title": "Unstructured Docs AI-Parsed",
+                "showTitle": true
+              },
+              "encodings": {
+                "value": {
+                  "fieldName": "documents",
+                  "displayName": "Documents",
+                  "format": {
+                    "type": "number-plain",
+                    "abbreviation": "none",
+                    "decimalPlaces": {
+                      "type": "max",
+                      "places": 0
+                    }
+                  }
+                }
+              },
+              "data": {
+                "queryName": "main"
+              }
+            }
+          },
+          "position": {
+            "x": 6,
+            "y": 0,
+            "width": 3,
+            "height": 3
+          }
+        },
+        {
+          "widget": {
+            "name": "counter_extracted_text",
+            "queries": [
+              {
+                "name": "main",
+                "query": {
+                  "datasetName": "document_metrics",
+                  "fields": [
+                    {
+                      "name": "text_chars",
+                      "expression": "MEASURE(`Extracted Text`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "counter",
+              "frame": {
+                "title": "Text Characters Extracted",
+                "showTitle": true
+              },
+              "encodings": {
+                "value": {
+                  "fieldName": "text_chars",
+                  "displayName": "Extracted chars",
+                  "format": {
+                    "type": "number-plain",
+                    "abbreviation": "compact",
+                    "decimalPlaces": {
+                      "type": "max",
+                      "places": 1
+                    }
+                  }
+                }
+              },
+              "data": {
+                "queryName": "main"
+              }
+            }
+          },
+          "position": {
+            "x": 9,
+            "y": 0,
+            "width": 3,
+            "height": 3
+          }
+        },
+        {
+          "widget": {
+            "name": "bar_revenue_by_category",
+            "queries": [
+              {
+                "name": "main",
+                "query": {
+                  "datasetName": "product_metrics",
+                  "fields": [
+                    {
+                      "name": "category",
+                      "expression": "`Category`"
+                    },
+                    {
+                      "name": "revenue",
+                      "expression": "MEASURE(`Revenue`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "widgetType": "bar",
+              "frame": {
+                "title": "Revenue by Product Category",
+                "showTitle": true
+              },
+              "encodings": {
+                "x": {
+                  "fieldName": "category",
+                  "displayName": "Category",
+                  "scale": {
+                    "type": "categorical",
+                    "sort": {
+                      "by": "measure-reversed",
+                      "measure": {
+                        "fieldName": "revenue"
+                      }
+                    }
+                  }
+                },
+                "y": {
+                  "fieldName": "revenue",
+                  "displayName": "Revenue",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                }
+              },
+              "data": {
+                "queryName": "main"
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 3,
+            "width": 6,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "bar_top_products",
+            "queries": [
+              {
+                "name": "main",
+                "query": {
+                  "datasetName": "product_metrics",
+                  "fields": [
+                    {
+                      "name": "product",
+                      "expression": "`Product Name`"
+                    },
+                    {
+                      "name": "revenue",
+                      "expression": "MEASURE(`Revenue`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "widgetType": "bar",
+              "frame": {
+                "title": "Products by Realized Revenue",
+                "showTitle": true
+              },
+              "encodings": {
+                "y": {
+                  "fieldName": "product",
+                  "displayName": "Product",
+                  "scale": {
+                    "type": "categorical",
+                    "categorySize": {
+                      "type": "number-of-categories",
+                      "number": 11
+                    },
+                    "sort": {
+                      "by": "measure-reversed",
+                      "measure": {
+                        "fieldName": "revenue"
+                      }
+                    }
+                  }
+                },
+                "x": {
+                  "fieldName": "revenue",
+                  "displayName": "Revenue",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                }
+              },
+              "data": {
+                "queryName": "main"
+              }
+            }
+          },
+          "position": {
+            "x": 6,
+            "y": 3,
+            "width": 6,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "bar_text_by_document",
+            "queries": [
+              {
+                "name": "main",
+                "query": {
+                  "datasetName": "document_metrics",
+                  "fields": [
+                    {
+                      "name": "document",
+                      "expression": "`Document`"
+                    },
+                    {
+                      "name": "text_chars",
+                      "expression": "MEASURE(`Extracted Text`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "widgetType": "bar",
+              "frame": {
+                "title": "AI-Extracted Text per Document",
+                "showTitle": true
+              },
+              "encodings": {
+                "x": {
+                  "fieldName": "document",
+                  "displayName": "Document",
+                  "scale": {
+                    "type": "categorical",
+                    "categorySize": {
+                      "type": "number-of-categories",
+                      "number": 6
+                    },
+                    "sort": {
+                      "by": "measure-reversed",
+                      "measure": {
+                        "fieldName": "text_chars"
+                      }
+                    }
+                  }
+                },
+                "y": {
+                  "fieldName": "text_chars",
+                  "displayName": "Extracted characters",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                }
+              },
+              "data": {
+                "queryName": "main"
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 9,
+            "width": 6,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "pie_docs_by_type",
+            "queries": [
+              {
+                "name": "main",
+                "query": {
+                  "datasetName": "document_metrics",
+                  "fields": [
+                    {
+                      "name": "doc_type",
+                      "expression": "`Doc Type`"
+                    },
+                    {
+                      "name": "documents",
+                      "expression": "MEASURE(`Documents`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "widgetType": "pie",
+              "frame": {
+                "title": "Parsed Documents by Type",
+                "showTitle": true
+              },
+              "encodings": {
+                "angle": {
+                  "fieldName": "documents",
+                  "displayName": "Documents",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                },
+                "color": {
+                  "fieldName": "doc_type",
+                  "displayName": "Doc Type",
+                  "scale": {
+                    "type": "categorical"
+                  }
+                }
+              },
+              "data": {
+                "queryName": "main"
+              }
+            }
+          },
+          "position": {
+            "x": 6,
+            "y": 9,
+            "width": 3,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "counter_avg_list_price",
+            "queries": [
+              {
+                "name": "main",
+                "query": {
+                  "datasetName": "product_metrics",
+                  "fields": [
+                    {
+                      "name": "avg_price",
+                      "expression": "MEASURE(`Avg List Price`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "counter",
+              "frame": {
+                "title": "Avg Catalog List Price",
+                "showTitle": true
+              },
+              "encodings": {
+                "value": {
+                  "fieldName": "avg_price",
+                  "displayName": "Avg List Price",
+                  "format": {
+                    "type": "number-currency",
+                    "currencyCode": "USD",
+                    "abbreviation": "none",
+                    "decimalPlaces": {
+                      "type": "max",
+                      "places": 0
+                    }
+                  }
+                }
+              },
+              "data": {
+                "queryName": "main"
+              }
+            }
+          },
+          "position": {
+            "x": 9,
+            "y": 9,
+            "width": 3,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "table_product_details",
+            "queries": [
+              {
+                "name": "main",
+                "query": {
+                  "datasetName": "product_metrics",
+                  "fields": [
+                    {
+                      "name": "product_id",
+                      "expression": "`Product ID`"
+                    },
+                    {
+                      "name": "product_name",
+                      "expression": "`Product Name`"
+                    },
+                    {
+                      "name": "category",
+                      "expression": "`Category`"
+                    },
+                    {
+                      "name": "status",
+                      "expression": "`Status`"
+                    },
+                    {
+                      "name": "revenue",
+                      "expression": "MEASURE(`Revenue`)"
+                    },
+                    {
+                      "name": "units_sold",
+                      "expression": "MEASURE(`Units Sold`)"
+                    },
+                    {
+                      "name": "orders",
+                      "expression": "MEASURE(`Orders`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "table",
+              "frame": {
+                "title": "Product Performance Detail",
+                "showTitle": true
+              },
+              "encodings": {
+                "columns": [
+                  {
+                    "fieldName": "product_id",
+                    "displayName": "Product ID"
+                  },
+                  {
+                    "fieldName": "product_name",
+                    "displayName": "Product"
+                  },
+                  {
+                    "fieldName": "category",
+                    "displayName": "Category"
+                  },
+                  {
+                    "fieldName": "status",
+                    "displayName": "Status"
+                  },
+                  {
+                    "fieldName": "revenue",
+                    "displayName": "Revenue (USD)"
+                  },
+                  {
+                    "fieldName": "units_sold",
+                    "displayName": "Units Sold"
+                  },
+                  {
+                    "fieldName": "orders",
+                    "displayName": "Orders"
+                  }
+                ]
+              },
+              "data": {
+                "queryName": "main"
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 15,
+            "width": 12,
+            "height": 7
+          }
+        }
+      ],
+      "pageType": "PAGE_TYPE_CANVAS",
+      "layoutVersion": "GRID_V1"
+    }
+  ]
+}

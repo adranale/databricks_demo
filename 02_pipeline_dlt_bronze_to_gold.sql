@@ -357,3 +357,154 @@ SELECT
   CURRENT_TIMESTAMP() AS report_generated_at
 FROM regional_accounts a
 LEFT JOIN regional_spend s ON a.region = s.region;
+
+-- COMMAND ----------
+
+-- DBTITLE 1,Semi-Structured (JSON Auto Loader) & Unstructured (AI Document Parsing) Sources
+-- ============================================================================
+-- DEMO EXTENSION 1: SEMI-STRUCTURED SOURCE (JSON PRODUCT CATALOG, AUTO LOADER)
+-- Product catalog JSONL files land in UC volume
+-- /Volumes/ops/bronze/ingest/product_catalog_json/ and are ingested
+-- INCREMENTALLY by Auto Loader: every pipeline update processes only the
+-- files that arrived since the previous one.
+-- ============================================================================
+
+CREATE OR REFRESH STREAMING TABLE ops.bronze.product_catalog_raw
+COMMENT 'Bronze: Raw semi-structured product catalog JSONL files ingested incrementally from the landing volume by Auto Loader'
+AS
+SELECT
+  *,
+  _metadata.file_name AS _source_file,
+  _metadata.file_modification_time AS _source_file_mtime
+FROM STREAM read_files(
+  '/Volumes/ops/bronze/ingest/product_catalog_json/',
+  format => 'json',
+  pathGlobFilter => '*.jsonl'
+);
+
+-- Silver: flatten, validate and deduplicate the catalog.
+-- Multiple catalog batches re-emit the same products with new prices, so the
+-- NEWEST catalog update per product_id must win. File mtimes are unreliable on
+-- cloud storage, so dedup keys on the business field updated_at.
+CREATE OR REFRESH STREAMING TABLE ops.silver.product_catalog_cleaned (
+  CONSTRAINT valid_product_id EXPECT (product_id IS NOT NULL) ON VIOLATION DROP ROW,
+  CONSTRAINT valid_list_price  EXPECT (list_price_usd > 0)     ON VIOLATION DROP ROW,
+  CONSTRAINT usd_priced        EXPECT (currency = 'USD')       ON VIOLATION DROP ROW
+)
+COMMENT 'Silver: Cleaned and deduplicated product catalog - latest catalog update wins per product (semi-structured source)'
+AS
+WITH latest AS (
+  -- Streaming-safe deduplication: newest catalog update per product_id wins
+  -- via MAX(struct(...)) + GROUP BY (updated_at is the leading field).
+  -- Records missing optional fields (specs, promo, description) are handled
+  -- with COALESCE downstream - classic semi-structured messiness.
+  SELECT MAX(STRUCT(
+    CAST(updated_at AS TIMESTAMP) AS updated_ts,
+    product_id, product_name, category, brand, list_price_usd, currency,
+    status, description, specs, promo, _source_file
+  )) AS rec
+  FROM STREAM(ops.bronze.product_catalog_raw)
+  GROUP BY product_id
+)
+SELECT
+  TRIM(rec.product_id) AS product_id,
+  TRIM(rec.product_name) AS product_name,
+  TRIM(rec.category) AS product_category,
+  TRIM(rec.brand) AS brand,
+  CAST(rec.list_price_usd AS DECIMAL(10,2)) AS list_price_usd,
+  UPPER(TRIM(rec.currency)) AS currency,
+  LOWER(TRIM(rec.status)) AS product_status,
+  rec.updated_ts AS catalog_updated_at,
+  TRIM(COALESCE(rec.description, 'No description provided')) AS description,
+  CAST(COALESCE(rec.specs.warranty_months, 0) AS INT) AS warranty_months,
+  CAST(COALESCE(rec.promo.discount_pct, 0) AS INT) AS active_discount_pct,
+  TRY_CAST(rec.promo.valid_until AS DATE) AS promo_valid_until,
+  rec._source_file AS source_file
+FROM latest;
+
+-- ============================================================================
+-- DEMO EXTENSION 2: UNSTRUCTURED SOURCE (PRODUCT IMAGES + PDF CATALOGS)
+-- Binary files land in /Volumes/ops/bronze/ingest/product_docs/ and are
+-- ingested as raw bytes; ai_parse_document (an AI function) then turns them
+-- into structured, queryable output inside the pipeline.
+-- ============================================================================
+
+CREATE OR REFRESH STREAMING TABLE ops.bronze.product_docs_raw
+COMMENT 'Bronze: Raw unstructured product documents (PDF catalogs, product images) ingested as binary files'
+AS
+SELECT
+  *,
+  _metadata.file_name AS _source_file,
+  _metadata.file_modification_time AS _source_file_mtime
+FROM STREAM read_files(
+  '/Volumes/ops/bronze/ingest/product_docs/',
+  format => 'binaryFile',
+  pathGlobFilter => '*.{pdf,png,jpg,jpeg}'
+);
+
+CREATE OR REFRESH MATERIALIZED VIEW ops.silver.product_docs_parsed
+COMMENT 'Silver: Unstructured product documents parsed by the ai_parse_document AI function into structured, queryable VARIANT output'
+AS
+SELECT
+  path AS doc_path,
+  _source_file AS source_file,
+  CASE
+    WHEN path LIKE '%.pdf' THEN 'PDF catalog'
+    WHEN path LIKE '%.png' THEN 'Product image'
+    ELSE 'Other document'
+  END AS doc_type,
+  length AS size_bytes,
+  content AS raw_content,
+  ai_parse_document(content, MAP('version', '2.0')) AS parsed_doc
+FROM ops.bronze.product_docs_raw;
+
+-- ============================================================================
+-- DEMO EXTENSION 3: GOLD LAYER TIE-INS
+-- The new sources feed the same governed Gold layer as the structured ones.
+-- ============================================================================
+
+CREATE OR REFRESH MATERIALIZED VIEW ops.gold.product_performance
+COMMENT 'Gold: Product revenue analytics joining the semi-structured JSON catalog with transaction facts'
+AS
+WITH tx AS (
+  SELECT
+    product_id,
+    SUM(quantity) AS units_sold,
+    SUM(amount_usd) AS revenue_usd,
+    COUNT(DISTINCT transaction_id) AS orders_count
+  FROM ops.silver.customer_transactions
+  GROUP BY product_id
+)
+SELECT
+  c.product_id,
+  c.product_name,
+  c.product_category,
+  c.brand,
+  c.list_price_usd,
+  c.product_status,
+  COALESCE(t.units_sold, 0) AS units_sold,
+  COALESCE(t.orders_count, 0) AS orders_count,
+  COALESCE(t.revenue_usd, 0) AS realized_revenue_usd,
+  CASE
+    WHEN COALESCE(t.orders_count, 0) = 0 THEN 'Catalog-only (no sales yet)'
+    WHEN t.revenue_usd >= 5000 THEN 'Top seller'
+    ELSE 'Selling'
+  END AS sales_performance
+FROM ops.silver.product_catalog_cleaned c
+LEFT JOIN tx t ON c.product_id = t.product_id;
+
+CREATE OR REFRESH MATERIALIZED VIEW ops.gold.document_intelligence_summary
+COMMENT 'Gold: Unstructured document intelligence - images and PDF catalogs made queryable by ai_parse_document'
+AS
+SELECT
+  source_file,
+  doc_type,
+  size_bytes,
+  cardinality(try_cast(parsed_doc:document:pages AS ARRAY<VARIANT>)) AS page_count,
+  cardinality(try_cast(parsed_doc:document:elements AS ARRAY<VARIANT>)) AS element_count,
+  length(concat_ws('\n', transform(
+    try_cast(parsed_doc:document:elements AS ARRAY<VARIANT>),
+    e -> try_cast(e:content AS STRING)
+  ))) AS extracted_text_chars
+FROM ops.silver.product_docs_parsed
+WHERE is_variant_null(parsed_doc:error_status);
