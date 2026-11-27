@@ -1,0 +1,2090 @@
+{
+  "datasets": [
+    {
+      "name": "linkedin_kpis",
+      "displayName": "LinkedIn KPIs",
+      "queryLines": [
+        "SELECT total_connections, distinct_companies, total_messages, conversations, outgoing_invitations, incoming_invitations, connections_since_2024, top_company, top_company_connections, first_connection, latest_connection\n",
+        "FROM personal.gold.network_kpis"
+      ]
+    },
+    {
+      "name": "linkedin_growth",
+      "displayName": "Network Growth",
+      "config": {
+        "version": "1.1",
+        "source": "personal.gold.connections_growth",
+        "dimensions": [
+          {
+            "name": "Connected Year",
+            "expr": "connected_year"
+          }
+        ],
+        "measures": [
+          {
+            "name": "Connections",
+            "expr": "SUM(connections)"
+          },
+          {
+            "name": "Cumulative",
+            "expr": "MAX(cumulative_connections)"
+          }
+        ]
+      }
+    },
+    {
+      "name": "linkedin_top_companies",
+      "displayName": "Top 15 Companies",
+      "queryLines": [
+        "SELECT company, connections, share_pct\n",
+        "FROM personal.gold.connections_by_company\n",
+        "ORDER BY connections DESC\n",
+        "LIMIT 15"
+      ]
+    },
+    {
+      "name": "linkedin_top_positions",
+      "displayName": "Top 10 Job Titles",
+      "queryLines": [
+        "SELECT position, connections, share_pct\n",
+        "FROM personal.gold.connections_by_position\n",
+        "ORDER BY connections DESC\n",
+        "LIMIT 10"
+      ]
+    },
+    {
+      "name": "linkedin_messages_month",
+      "displayName": "Messages by Month",
+      "config": {
+        "version": "1.1",
+        "source": "personal.gold.messages_by_month",
+        "dimensions": [
+          {
+            "name": "Month",
+            "expr": "month"
+          }
+        ],
+        "measures": [
+          {
+            "name": "Messages",
+            "expr": "SUM(total_messages)"
+          },
+          {
+            "name": "Own Messages",
+            "expr": "SUM(own_messages)"
+          },
+          {
+            "name": "Received Messages",
+            "expr": "SUM(received_messages)"
+          }
+        ]
+      }
+    },
+    {
+      "name": "linkedin_invitations",
+      "displayName": "Invitations",
+      "config": {
+        "version": "1.1",
+        "source": "personal.gold.invitations_summary",
+        "dimensions": [
+          {
+            "name": "Direction",
+            "expr": "direction"
+          }
+        ],
+        "measures": [
+          {
+            "name": "Invitations",
+            "expr": "SUM(invitations)"
+          }
+        ]
+      }
+    },
+    {
+      "name": "linkedin_career",
+      "displayName": "Career Timeline",
+      "queryLines": [
+        "SELECT company_name, title, location, started_on, finished_on, is_current\n",
+        "FROM personal.gold.career_timeline\n",
+        "ORDER BY started_on"
+      ]
+    },
+    {
+      "name": "linkedin_engagement_month",
+      "displayName": "Engagement by Month",
+      "config": {
+        "version": "1.1",
+        "source": "personal.gold.engagement_by_month",
+        "dimensions": [
+          {
+            "name": "Month",
+            "expr": "month"
+          },
+          {
+            "name": "Event Type",
+            "expr": "event_type"
+          }
+        ],
+        "measures": [
+          {
+            "name": "Events",
+            "expr": "SUM(events)"
+          }
+        ]
+      }
+    },
+    {
+      "name": "linkedin_engagement_type",
+      "displayName": "Engagement by Type",
+      "queryLines": [
+        "SELECT event_type, subtype, events, share_pct\n",
+        "FROM personal.gold.engagement_by_type\n",
+        "ORDER BY events DESC"
+      ]
+    },
+    {
+      "name": "linkedin_endorsement_skills",
+      "displayName": "Top Endorsed Skills",
+      "queryLines": [
+        "SELECT skill_name, endorsements, distinct_endorsers, share_pct\n",
+        "FROM personal.gold.endorsements_by_skill\n",
+        "ORDER BY endorsements DESC\n",
+        "LIMIT 10"
+      ]
+    },
+    {
+      "name": "linkedin_endorsement_kpis",
+      "displayName": "Endorsement KPIs",
+      "queryLines": [
+        "SELECT received_total, given_total, accepted, rejected, top_skill, top_skill_endorsements\n",
+        "FROM personal.gold.endorsements_summary"
+      ]
+    },
+    {
+      "name": "linkedin_saved_jobs",
+      "displayName": "Saved Jobs by Company",
+      "queryLines": [
+        "SELECT company_name, jobs_saved, latest_saved, share_pct\n",
+        "FROM personal.gold.saved_jobs_by_company\n",
+        "ORDER BY jobs_saved DESC\n",
+        "LIMIT 10"
+      ]
+    },
+    {
+      "name": "linkedin_search_terms",
+      "displayName": "Search Terms",
+      "queryLines": [
+        "SELECT search_term, searches, first_searched, last_searched\n",
+        "FROM personal.gold.search_terms\n",
+        "ORDER BY searches DESC\n",
+        "LIMIT 15"
+      ]
+    },
+    {
+      "name": "linkedin_learning",
+      "displayName": "Learning Summary",
+      "queryLines": [
+        "SELECT content_items, completed, saved, last_activity\n",
+        "FROM personal.gold.learning_summary"
+      ]
+    },
+    {
+      "name": "linkedin_profile",
+      "displayName": "Profile Overview",
+      "queryLines": [
+        "SELECT headline, industry, geo_location, member_since, positions, skills, languages, projects, publications, events, certifications, education, members_followed\n",
+        "FROM personal.gold.profile_overview"
+      ]
+    },
+    {
+      "name": "linkedin_inferences",
+      "displayName": "LinkedIn Inferences",
+      "queryLines": [
+        "SELECT category, inference_type, inference, description\n",
+        "FROM personal.silver.inferences_cleaned\n",
+        "ORDER BY category, inference_type"
+      ]
+    },
+    {
+      "name": "linkedin_ads_month",
+      "displayName": "Ad Clicks by Month",
+      "config": {
+        "version": "1.1",
+        "source": "personal.gold.ads_clicked_by_month",
+        "dimensions": [
+          {
+            "name": "Month",
+            "expr": "month"
+          }
+        ],
+        "measures": [
+          {
+            "name": "Clicks",
+            "expr": "SUM(clicks)"
+          }
+        ]
+      }
+    },
+    {
+      "name": "linkedin_logins_month",
+      "displayName": "Logins by Month",
+      "config": {
+        "version": "1.1",
+        "source": "personal.gold.logins_by_month",
+        "dimensions": [
+          {
+            "name": "Month",
+            "expr": "month"
+          }
+        ],
+        "measures": [
+          {
+            "name": "Logins",
+            "expr": "SUM(logins)"
+          }
+        ]
+      }
+    },
+    {
+      "name": "linkedin_follows_month",
+      "displayName": "Member Follows by Month",
+      "config": {
+        "version": "1.1",
+        "source": "personal.gold.member_follows_by_month",
+        "dimensions": [
+          {
+            "name": "Month",
+            "expr": "month"
+          }
+        ],
+        "measures": [
+          {
+            "name": "New Follows",
+            "expr": "SUM(new_follows)"
+          },
+          {
+            "name": "Total Follows",
+            "expr": "MAX(total_follows)"
+          }
+        ]
+      }
+    },
+    {
+      "name": "linkedin_security",
+      "displayName": "Security Challenges",
+      "queryLines": [
+        "SELECT challenge_type, challenges, first_seen, last_seen, countries\n",
+        "FROM personal.gold.security_challenges_summary\n",
+        "ORDER BY challenges DESC"
+      ]
+    },
+    {
+      "name": "linkedin_recommendations",
+      "displayName": "Recommendations",
+      "queryLines": [
+        "SELECT given_total, given_visible, last_given, received_total, received_visible, last_received\n",
+        "FROM personal.gold.recommendations_summary"
+      ]
+    }
+  ],
+  "pages": [
+    {
+      "name": "network",
+      "displayName": "Network & Activity",
+      "layout": [
+        {
+          "widget": {
+            "name": "counter_connections",
+            "queries": [
+              {
+                "name": "main",
+                "query": {
+                  "datasetName": "linkedin_kpis",
+                  "fields": [
+                    {
+                      "name": "connections",
+                      "expression": "SUM(`total_connections`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "counter",
+              "frame": {
+                "title": "Total connections",
+                "showTitle": true
+              },
+              "encodings": {
+                "value": {
+                  "fieldName": "connections",
+                  "displayName": "Connections",
+                  "format": {
+                    "type": "number-plain",
+                    "abbreviation": "compact",
+                    "decimalPlaces": {
+                      "type": "max",
+                      "places": 1
+                    }
+                  }
+                }
+              },
+              "data": {
+                "queryName": "main"
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 0,
+            "width": 3,
+            "height": 3
+          }
+        },
+        {
+          "widget": {
+            "name": "counter_messages",
+            "queries": [
+              {
+                "name": "main",
+                "query": {
+                  "datasetName": "linkedin_kpis",
+                  "fields": [
+                    {
+                      "name": "messages",
+                      "expression": "SUM(`total_messages`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "counter",
+              "frame": {
+                "title": "Messages all-time",
+                "showTitle": true
+              },
+              "encodings": {
+                "value": {
+                  "fieldName": "messages",
+                  "displayName": "Messages",
+                  "format": {
+                    "type": "number-plain",
+                    "abbreviation": "compact",
+                    "decimalPlaces": {
+                      "type": "max",
+                      "places": 1
+                    }
+                  }
+                }
+              },
+              "data": {
+                "queryName": "main"
+              }
+            }
+          },
+          "position": {
+            "x": 3,
+            "y": 0,
+            "width": 3,
+            "height": 3
+          }
+        },
+        {
+          "widget": {
+            "name": "counter_conversations",
+            "queries": [
+              {
+                "name": "main",
+                "query": {
+                  "datasetName": "linkedin_kpis",
+                  "fields": [
+                    {
+                      "name": "conversations",
+                      "expression": "SUM(`conversations`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "counter",
+              "frame": {
+                "title": "Conversations",
+                "showTitle": true
+              },
+              "encodings": {
+                "value": {
+                  "fieldName": "conversations",
+                  "displayName": "Conversations",
+                  "format": {
+                    "type": "number-plain",
+                    "abbreviation": "compact",
+                    "decimalPlaces": {
+                      "type": "max",
+                      "places": 1
+                    }
+                  }
+                }
+              },
+              "data": {
+                "queryName": "main"
+              }
+            }
+          },
+          "position": {
+            "x": 6,
+            "y": 0,
+            "width": 3,
+            "height": 3
+          }
+        },
+        {
+          "widget": {
+            "name": "counter_companies",
+            "queries": [
+              {
+                "name": "main",
+                "query": {
+                  "datasetName": "linkedin_kpis",
+                  "fields": [
+                    {
+                      "name": "companies",
+                      "expression": "MAX(`distinct_companies`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "counter",
+              "frame": {
+                "title": "Companies in network",
+                "showTitle": true
+              },
+              "encodings": {
+                "value": {
+                  "fieldName": "companies",
+                  "displayName": "Companies",
+                  "format": {
+                    "type": "number-plain",
+                    "abbreviation": "none",
+                    "decimalPlaces": {
+                      "type": "max",
+                      "places": 0
+                    }
+                  }
+                }
+              },
+              "data": {
+                "queryName": "main"
+              }
+            }
+          },
+          "position": {
+            "x": 9,
+            "y": 0,
+            "width": 3,
+            "height": 3
+          }
+        },
+        {
+          "widget": {
+            "name": "bar_growth",
+            "queries": [
+              {
+                "name": "main",
+                "query": {
+                  "datasetName": "linkedin_growth",
+                  "fields": [
+                    {
+                      "name": "year",
+                      "expression": "`Connected Year`"
+                    },
+                    {
+                      "name": "connections",
+                      "expression": "MEASURE(`Connections`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "widgetType": "bar",
+              "frame": {
+                "title": "New connections per year",
+                "showTitle": true
+              },
+              "encodings": {
+                "x": {
+                  "fieldName": "year",
+                  "displayName": "Year",
+                  "scale": {
+                    "type": "categorical",
+                    "categorySize": {
+                      "type": "number-of-categories",
+                      "number": 20
+                    },
+                    "sort": {
+                      "by": "natural-order"
+                    }
+                  }
+                },
+                "y": {
+                  "fieldName": "connections",
+                  "displayName": "New connections",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                }
+              },
+              "data": {
+                "queryName": "main"
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 3,
+            "width": 6,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "line_messages",
+            "queries": [
+              {
+                "name": "main",
+                "query": {
+                  "datasetName": "linkedin_messages_month",
+                  "fields": [
+                    {
+                      "name": "month",
+                      "expression": "`Month`"
+                    },
+                    {
+                      "name": "own",
+                      "expression": "MEASURE(`Own Messages`)"
+                    },
+                    {
+                      "name": "received",
+                      "expression": "MEASURE(`Received Messages`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "widgetType": "line",
+              "frame": {
+                "title": "Messages per month: sent vs received",
+                "showTitle": true
+              },
+              "encodings": {
+                "x": {
+                  "fieldName": "month",
+                  "displayName": "Month",
+                  "scale": {
+                    "type": "temporal"
+                  }
+                },
+                "y": {
+                  "scale": {
+                    "type": "quantitative"
+                  },
+                  "fields": [
+                    {
+                      "fieldName": "own",
+                      "displayName": "Sent by me"
+                    },
+                    {
+                      "fieldName": "received",
+                      "displayName": "Received"
+                    }
+                  ]
+                }
+              },
+              "data": {
+                "queryName": "main"
+              }
+            }
+          },
+          "position": {
+            "x": 6,
+            "y": 3,
+            "width": 6,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "bar_companies",
+            "queries": [
+              {
+                "name": "main",
+                "query": {
+                  "datasetName": "linkedin_top_companies",
+                  "fields": [
+                    {
+                      "name": "company",
+                      "expression": "`company`"
+                    },
+                    {
+                      "name": "connections",
+                      "expression": "SUM(`connections`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "widgetType": "bar",
+              "frame": {
+                "title": "Top 15 companies in network",
+                "showTitle": true
+              },
+              "encodings": {
+                "x": {
+                  "fieldName": "connections",
+                  "displayName": "Connections",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                },
+                "y": {
+                  "fieldName": "company",
+                  "displayName": "Company",
+                  "scale": {
+                    "type": "categorical",
+                    "categorySize": {
+                      "type": "number-of-categories",
+                      "number": 15
+                    },
+                    "sort": {
+                      "by": "measure-reversed",
+                      "measure": {
+                        "fieldName": "connections"
+                      }
+                    }
+                  }
+                }
+              },
+              "data": {
+                "queryName": "main"
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 9,
+            "width": 6,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "bar_positions",
+            "queries": [
+              {
+                "name": "main",
+                "query": {
+                  "datasetName": "linkedin_top_positions",
+                  "fields": [
+                    {
+                      "name": "position",
+                      "expression": "`position`"
+                    },
+                    {
+                      "name": "connections",
+                      "expression": "SUM(`connections`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "widgetType": "bar",
+              "frame": {
+                "title": "Top 10 job titles in network",
+                "showTitle": true
+              },
+              "encodings": {
+                "x": {
+                  "fieldName": "position",
+                  "displayName": "Job title",
+                  "scale": {
+                    "type": "categorical",
+                    "categorySize": {
+                      "type": "number-of-categories",
+                      "number": 10
+                    },
+                    "sort": {
+                      "by": "measure-reversed",
+                      "measure": {
+                        "fieldName": "connections"
+                      }
+                    }
+                  }
+                },
+                "y": {
+                  "fieldName": "connections",
+                  "displayName": "Connections",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                }
+              },
+              "data": {
+                "queryName": "main"
+              }
+            }
+          },
+          "position": {
+            "x": 6,
+            "y": 9,
+            "width": 6,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "table_career",
+            "queries": [
+              {
+                "name": "main",
+                "query": {
+                  "datasetName": "linkedin_career",
+                  "fields": [
+                    {
+                      "name": "company",
+                      "expression": "`company_name`"
+                    },
+                    {
+                      "name": "title",
+                      "expression": "`title`"
+                    },
+                    {
+                      "name": "location",
+                      "expression": "`location`"
+                    },
+                    {
+                      "name": "started",
+                      "expression": "`started_on`"
+                    },
+                    {
+                      "name": "finished",
+                      "expression": "`finished_on`"
+                    },
+                    {
+                      "name": "current",
+                      "expression": "`is_current`"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "table",
+              "frame": {
+                "title": "Career timeline",
+                "showTitle": true
+              },
+              "encodings": {
+                "columns": [
+                  {
+                    "fieldName": "company",
+                    "displayName": "Company"
+                  },
+                  {
+                    "fieldName": "title",
+                    "displayName": "Title"
+                  },
+                  {
+                    "fieldName": "location",
+                    "displayName": "Location"
+                  },
+                  {
+                    "fieldName": "started",
+                    "displayName": "Started"
+                  },
+                  {
+                    "fieldName": "finished",
+                    "displayName": "Finished"
+                  },
+                  {
+                    "fieldName": "current",
+                    "displayName": "Current"
+                  }
+                ]
+              },
+              "rowsPerPage": 15,
+              "data": {
+                "queryName": "main"
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 15,
+            "width": 6,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "pie_invitations",
+            "queries": [
+              {
+                "name": "main",
+                "query": {
+                  "datasetName": "linkedin_invitations",
+                  "fields": [
+                    {
+                      "name": "direction",
+                      "expression": "`Direction`"
+                    },
+                    {
+                      "name": "invitations",
+                      "expression": "MEASURE(`Invitations`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "widgetType": "pie",
+              "frame": {
+                "title": "Invitations sent vs received",
+                "showTitle": true
+              },
+              "encodings": {
+                "angle": {
+                  "fieldName": "invitations",
+                  "displayName": "Invitations",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                },
+                "color": {
+                  "fieldName": "direction",
+                  "displayName": "Direction",
+                  "scale": {
+                    "type": "categorical"
+                  }
+                }
+              },
+              "data": {
+                "queryName": "main"
+              }
+            }
+          },
+          "position": {
+            "x": 6,
+            "y": 15,
+            "width": 6,
+            "height": 6
+          }
+        }
+      ],
+      "pageType": "PAGE_TYPE_CANVAS",
+      "layoutVersion": "GRID_V1"
+    },
+    {
+      "name": "content",
+      "displayName": "Content & Engagement",
+      "layout": [
+        {
+          "widget": {
+            "name": "counter_endorsements_received",
+            "queries": [
+              {
+                "name": "main",
+                "query": {
+                  "datasetName": "linkedin_endorsement_kpis",
+                  "fields": [
+                    {
+                      "name": "received",
+                      "expression": "SUM(`received_total`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "counter",
+              "frame": {
+                "title": "Endorsements received",
+                "showTitle": true
+              },
+              "encodings": {
+                "value": {
+                  "fieldName": "received",
+                  "displayName": "Endorsements received",
+                  "format": {
+                    "type": "number-plain",
+                    "abbreviation": "none",
+                    "decimalPlaces": {
+                      "type": "max",
+                      "places": 0
+                    }
+                  }
+                }
+              },
+              "data": {
+                "queryName": "main"
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 0,
+            "width": 3,
+            "height": 3
+          }
+        },
+        {
+          "widget": {
+            "name": "counter_endorsements_given",
+            "queries": [
+              {
+                "name": "main",
+                "query": {
+                  "datasetName": "linkedin_endorsement_kpis",
+                  "fields": [
+                    {
+                      "name": "given",
+                      "expression": "SUM(`given_total`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "counter",
+              "frame": {
+                "title": "Endorsements given",
+                "showTitle": true
+              },
+              "encodings": {
+                "value": {
+                  "fieldName": "given",
+                  "displayName": "Endorsements given",
+                  "format": {
+                    "type": "number-plain",
+                    "abbreviation": "none",
+                    "decimalPlaces": {
+                      "type": "max",
+                      "places": 0
+                    }
+                  }
+                }
+              },
+              "data": {
+                "queryName": "main"
+              }
+            }
+          },
+          "position": {
+            "x": 3,
+            "y": 0,
+            "width": 3,
+            "height": 3
+          }
+        },
+        {
+          "widget": {
+            "name": "counter_learning_items",
+            "queries": [
+              {
+                "name": "main",
+                "query": {
+                  "datasetName": "linkedin_learning",
+                  "fields": [
+                    {
+                      "name": "items",
+                      "expression": "SUM(`content_items`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "counter",
+              "frame": {
+                "title": "LinkedIn Learning items",
+                "showTitle": true
+              },
+              "encodings": {
+                "value": {
+                  "fieldName": "items",
+                  "displayName": "Learning items",
+                  "format": {
+                    "type": "number-plain",
+                    "abbreviation": "none",
+                    "decimalPlaces": {
+                      "type": "max",
+                      "places": 0
+                    }
+                  }
+                }
+              },
+              "data": {
+                "queryName": "main"
+              }
+            }
+          },
+          "position": {
+            "x": 6,
+            "y": 0,
+            "width": 3,
+            "height": 3
+          }
+        },
+        {
+          "widget": {
+            "name": "counter_learning_completed",
+            "queries": [
+              {
+                "name": "main",
+                "query": {
+                  "datasetName": "linkedin_learning",
+                  "fields": [
+                    {
+                      "name": "completed",
+                      "expression": "SUM(`completed`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "counter",
+              "frame": {
+                "title": "Learning courses completed",
+                "showTitle": true
+              },
+              "encodings": {
+                "value": {
+                  "fieldName": "completed",
+                  "displayName": "Completed",
+                  "format": {
+                    "type": "number-plain",
+                    "abbreviation": "none",
+                    "decimalPlaces": {
+                      "type": "max",
+                      "places": 0
+                    }
+                  }
+                }
+              },
+              "data": {
+                "queryName": "main"
+              }
+            }
+          },
+          "position": {
+            "x": 9,
+            "y": 0,
+            "width": 3,
+            "height": 3
+          }
+        },
+        {
+          "widget": {
+            "name": "bar_engagement_month",
+            "queries": [
+              {
+                "name": "main",
+                "query": {
+                  "datasetName": "linkedin_engagement_month",
+                  "fields": [
+                    {
+                      "name": "month",
+                      "expression": "`Month`"
+                    },
+                    {
+                      "name": "event_type",
+                      "expression": "`Event Type`"
+                    },
+                    {
+                      "name": "events",
+                      "expression": "MEASURE(`Events`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "widgetType": "bar",
+              "frame": {
+                "title": "Feed engagement per month by type",
+                "showTitle": true
+              },
+              "encodings": {
+                "x": {
+                  "fieldName": "month",
+                  "displayName": "Month",
+                  "scale": {
+                    "type": "temporal"
+                  }
+                },
+                "y": {
+                  "fieldName": "events",
+                  "displayName": "Events",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                },
+                "color": {
+                  "fieldName": "event_type",
+                  "displayName": "Type",
+                  "scale": {
+                    "type": "categorical"
+                  }
+                }
+              },
+              "mark": {
+                "layout": "stack"
+              },
+              "data": {
+                "queryName": "main"
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 3,
+            "width": 6,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "table_engagement_type",
+            "queries": [
+              {
+                "name": "main",
+                "query": {
+                  "datasetName": "linkedin_engagement_type",
+                  "fields": [
+                    {
+                      "name": "event_type",
+                      "expression": "`event_type`"
+                    },
+                    {
+                      "name": "subtype",
+                      "expression": "`subtype`"
+                    },
+                    {
+                      "name": "events",
+                      "expression": "SUM(`events`)"
+                    },
+                    {
+                      "name": "share_pct",
+                      "expression": "SUM(`share_pct`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "table",
+              "frame": {
+                "title": "Engagement events by type",
+                "showTitle": true
+              },
+              "encodings": {
+                "columns": [
+                  {
+                    "fieldName": "event_type",
+                    "displayName": "Type"
+                  },
+                  {
+                    "fieldName": "subtype",
+                    "displayName": "Subtype"
+                  },
+                  {
+                    "fieldName": "events",
+                    "displayName": "Events"
+                  },
+                  {
+                    "fieldName": "share_pct",
+                    "displayName": "Share %"
+                  }
+                ]
+              },
+              "rowsPerPage": 15,
+              "data": {
+                "queryName": "main"
+              }
+            }
+          },
+          "position": {
+            "x": 6,
+            "y": 3,
+            "width": 6,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "bar_endorsement_skills",
+            "queries": [
+              {
+                "name": "main",
+                "query": {
+                  "datasetName": "linkedin_endorsement_skills",
+                  "fields": [
+                    {
+                      "name": "skill",
+                      "expression": "`skill_name`"
+                    },
+                    {
+                      "name": "endorsements",
+                      "expression": "SUM(`endorsements`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "widgetType": "bar",
+              "frame": {
+                "title": "Top 10 endorsed skills",
+                "showTitle": true
+              },
+              "encodings": {
+                "x": {
+                  "fieldName": "endorsements",
+                  "displayName": "Endorsements",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                },
+                "y": {
+                  "fieldName": "skill",
+                  "displayName": "Skill",
+                  "scale": {
+                    "type": "categorical",
+                    "categorySize": {
+                      "type": "number-of-categories",
+                      "number": 10
+                    },
+                    "sort": {
+                      "by": "measure-reversed",
+                      "measure": {
+                        "fieldName": "endorsements"
+                      }
+                    }
+                  }
+                }
+              },
+              "data": {
+                "queryName": "main"
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 9,
+            "width": 6,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "bar_saved_jobs",
+            "queries": [
+              {
+                "name": "main",
+                "query": {
+                  "datasetName": "linkedin_saved_jobs",
+                  "fields": [
+                    {
+                      "name": "company",
+                      "expression": "`company_name`"
+                    },
+                    {
+                      "name": "jobs_saved",
+                      "expression": "SUM(`jobs_saved`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "widgetType": "bar",
+              "frame": {
+                "title": "Top 10 saved-jobs companies",
+                "showTitle": true
+              },
+              "encodings": {
+                "x": {
+                  "fieldName": "jobs_saved",
+                  "displayName": "Saved jobs",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                },
+                "y": {
+                  "fieldName": "company",
+                  "displayName": "Company",
+                  "scale": {
+                    "type": "categorical",
+                    "categorySize": {
+                      "type": "number-of-categories",
+                      "number": 10
+                    },
+                    "sort": {
+                      "by": "measure-reversed",
+                      "measure": {
+                        "fieldName": "jobs_saved"
+                      }
+                    }
+                  }
+                }
+              },
+              "data": {
+                "queryName": "main"
+              }
+            }
+          },
+          "position": {
+            "x": 6,
+            "y": 9,
+            "width": 6,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "table_search_terms",
+            "queries": [
+              {
+                "name": "main",
+                "query": {
+                  "datasetName": "linkedin_search_terms",
+                  "fields": [
+                    {
+                      "name": "search_term",
+                      "expression": "`search_term`"
+                    },
+                    {
+                      "name": "searches",
+                      "expression": "SUM(`searches`)"
+                    },
+                    {
+                      "name": "first_searched",
+                      "expression": "`first_searched`"
+                    },
+                    {
+                      "name": "last_searched",
+                      "expression": "`last_searched`"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "table",
+              "frame": {
+                "title": "Most frequent search terms",
+                "showTitle": true
+              },
+              "encodings": {
+                "columns": [
+                  {
+                    "fieldName": "search_term",
+                    "displayName": "Search term"
+                  },
+                  {
+                    "fieldName": "searches",
+                    "displayName": "Searches"
+                  },
+                  {
+                    "fieldName": "first_searched",
+                    "displayName": "First searched"
+                  },
+                  {
+                    "fieldName": "last_searched",
+                    "displayName": "Last searched"
+                  }
+                ]
+              },
+              "rowsPerPage": 15,
+              "data": {
+                "queryName": "main"
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 15,
+            "width": 12,
+            "height": 6
+          }
+        }
+      ],
+      "pageType": "PAGE_TYPE_CANVAS",
+      "layoutVersion": "GRID_V1"
+    },
+    {
+      "name": "profile",
+      "displayName": "Profile & Platform",
+      "layout": [
+        {
+          "widget": {
+            "name": "table_profile",
+            "queries": [
+              {
+                "name": "main",
+                "query": {
+                  "datasetName": "linkedin_profile",
+                  "fields": [
+                    {
+                      "name": "headline",
+                      "expression": "`headline`"
+                    },
+                    {
+                      "name": "industry",
+                      "expression": "`industry`"
+                    },
+                    {
+                      "name": "geo_location",
+                      "expression": "`geo_location`"
+                    },
+                    {
+                      "name": "member_since",
+                      "expression": "`member_since`"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "table",
+              "frame": {
+                "title": "Profile snapshot",
+                "showTitle": true
+              },
+              "encodings": {
+                "columns": [
+                  {
+                    "fieldName": "headline",
+                    "displayName": "Headline"
+                  },
+                  {
+                    "fieldName": "industry",
+                    "displayName": "Industry"
+                  },
+                  {
+                    "fieldName": "geo_location",
+                    "displayName": "Location"
+                  },
+                  {
+                    "fieldName": "member_since",
+                    "displayName": "Member since"
+                  }
+                ]
+              },
+              "rowsPerPage": 15,
+              "data": {
+                "queryName": "main"
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 0,
+            "width": 8,
+            "height": 3
+          }
+        },
+        {
+          "widget": {
+            "name": "counter_skills",
+            "queries": [
+              {
+                "name": "main",
+                "query": {
+                  "datasetName": "linkedin_profile",
+                  "fields": [
+                    {
+                      "name": "skills",
+                      "expression": "SUM(`skills`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "counter",
+              "frame": {
+                "title": "Skills listed",
+                "showTitle": true
+              },
+              "encodings": {
+                "value": {
+                  "fieldName": "skills",
+                  "displayName": "Skills",
+                  "format": {
+                    "type": "number-plain",
+                    "abbreviation": "none",
+                    "decimalPlaces": {
+                      "type": "max",
+                      "places": 0
+                    }
+                  }
+                }
+              },
+              "data": {
+                "queryName": "main"
+              }
+            }
+          },
+          "position": {
+            "x": 8,
+            "y": 0,
+            "width": 2,
+            "height": 3
+          }
+        },
+        {
+          "widget": {
+            "name": "counter_follows",
+            "queries": [
+              {
+                "name": "main",
+                "query": {
+                  "datasetName": "linkedin_profile",
+                  "fields": [
+                    {
+                      "name": "members_followed",
+                      "expression": "SUM(`members_followed`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "counter",
+              "frame": {
+                "title": "Members followed",
+                "showTitle": true
+              },
+              "encodings": {
+                "value": {
+                  "fieldName": "members_followed",
+                  "displayName": "Members followed",
+                  "format": {
+                    "type": "number-plain",
+                    "abbreviation": "none",
+                    "decimalPlaces": {
+                      "type": "max",
+                      "places": 0
+                    }
+                  }
+                }
+              },
+              "data": {
+                "queryName": "main"
+              }
+            }
+          },
+          "position": {
+            "x": 10,
+            "y": 0,
+            "width": 2,
+            "height": 3
+          }
+        },
+        {
+          "widget": {
+            "name": "bar_ads_month",
+            "queries": [
+              {
+                "name": "main",
+                "query": {
+                  "datasetName": "linkedin_ads_month",
+                  "fields": [
+                    {
+                      "name": "month",
+                      "expression": "`Month`"
+                    },
+                    {
+                      "name": "clicks",
+                      "expression": "MEASURE(`Clicks`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "widgetType": "bar",
+              "frame": {
+                "title": "Ad clicks per month",
+                "showTitle": true
+              },
+              "encodings": {
+                "x": {
+                  "fieldName": "month",
+                  "displayName": "Month",
+                  "scale": {
+                    "type": "temporal"
+                  }
+                },
+                "y": {
+                  "fieldName": "clicks",
+                  "displayName": "Ad clicks",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                }
+              },
+              "data": {
+                "queryName": "main"
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 3,
+            "width": 6,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "line_follows_month",
+            "queries": [
+              {
+                "name": "main",
+                "query": {
+                  "datasetName": "linkedin_follows_month",
+                  "fields": [
+                    {
+                      "name": "month",
+                      "expression": "`Month`"
+                    },
+                    {
+                      "name": "new_follows",
+                      "expression": "MEASURE(`New Follows`)"
+                    },
+                    {
+                      "name": "total_follows",
+                      "expression": "MEASURE(`Total Follows`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "widgetType": "line",
+              "frame": {
+                "title": "Members followed per month",
+                "showTitle": true
+              },
+              "encodings": {
+                "x": {
+                  "fieldName": "month",
+                  "displayName": "Month",
+                  "scale": {
+                    "type": "temporal"
+                  }
+                },
+                "y": {
+                  "scale": {
+                    "type": "quantitative"
+                  },
+                  "fields": [
+                    {
+                      "fieldName": "new_follows",
+                      "displayName": "New follows"
+                    },
+                    {
+                      "fieldName": "total_follows",
+                      "displayName": "Total followed"
+                    }
+                  ]
+                }
+              },
+              "data": {
+                "queryName": "main"
+              }
+            }
+          },
+          "position": {
+            "x": 6,
+            "y": 3,
+            "width": 6,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "bar_logins_month",
+            "queries": [
+              {
+                "name": "main",
+                "query": {
+                  "datasetName": "linkedin_logins_month",
+                  "fields": [
+                    {
+                      "name": "month",
+                      "expression": "`Month`"
+                    },
+                    {
+                      "name": "logins",
+                      "expression": "MEASURE(`Logins`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "widgetType": "bar",
+              "frame": {
+                "title": "Logins per month",
+                "showTitle": true
+              },
+              "encodings": {
+                "x": {
+                  "fieldName": "month",
+                  "displayName": "Month",
+                  "scale": {
+                    "type": "temporal"
+                  }
+                },
+                "y": {
+                  "fieldName": "logins",
+                  "displayName": "Logins",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                }
+              },
+              "data": {
+                "queryName": "main"
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 9,
+            "width": 6,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "table_security",
+            "queries": [
+              {
+                "name": "main",
+                "query": {
+                  "datasetName": "linkedin_security",
+                  "fields": [
+                    {
+                      "name": "challenge_type",
+                      "expression": "`challenge_type`"
+                    },
+                    {
+                      "name": "challenges",
+                      "expression": "SUM(`challenges`)"
+                    },
+                    {
+                      "name": "first_seen",
+                      "expression": "`first_seen`"
+                    },
+                    {
+                      "name": "last_seen",
+                      "expression": "`last_seen`"
+                    },
+                    {
+                      "name": "countries",
+                      "expression": "SUM(`countries`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "table",
+              "frame": {
+                "title": "Security challenges by type",
+                "showTitle": true
+              },
+              "encodings": {
+                "columns": [
+                  {
+                    "fieldName": "challenge_type",
+                    "displayName": "Challenge type"
+                  },
+                  {
+                    "fieldName": "challenges",
+                    "displayName": "Challenges"
+                  },
+                  {
+                    "fieldName": "first_seen",
+                    "displayName": "First seen"
+                  },
+                  {
+                    "fieldName": "last_seen",
+                    "displayName": "Last seen"
+                  },
+                  {
+                    "fieldName": "countries",
+                    "displayName": "Countries"
+                  }
+                ]
+              },
+              "rowsPerPage": 15,
+              "data": {
+                "queryName": "main"
+              }
+            }
+          },
+          "position": {
+            "x": 6,
+            "y": 9,
+            "width": 6,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "table_inferences",
+            "queries": [
+              {
+                "name": "main",
+                "query": {
+                  "datasetName": "linkedin_inferences",
+                  "fields": [
+                    {
+                      "name": "category",
+                      "expression": "`category`"
+                    },
+                    {
+                      "name": "inference_type",
+                      "expression": "`inference_type`"
+                    },
+                    {
+                      "name": "inference",
+                      "expression": "`inference`"
+                    },
+                    {
+                      "name": "description",
+                      "expression": "`description`"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "table",
+              "frame": {
+                "title": "What LinkedIn infers about you",
+                "showTitle": true
+              },
+              "encodings": {
+                "columns": [
+                  {
+                    "fieldName": "category",
+                    "displayName": "Category"
+                  },
+                  {
+                    "fieldName": "inference_type",
+                    "displayName": "Inference"
+                  },
+                  {
+                    "fieldName": "inference",
+                    "displayName": "Value"
+                  },
+                  {
+                    "fieldName": "description",
+                    "displayName": "Description"
+                  }
+                ]
+              },
+              "rowsPerPage": 10,
+              "data": {
+                "queryName": "main"
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 15,
+            "width": 7,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "counter_recs_given",
+            "queries": [
+              {
+                "name": "main",
+                "query": {
+                  "datasetName": "linkedin_recommendations",
+                  "fields": [
+                    {
+                      "name": "given_total",
+                      "expression": "SUM(`given_total`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "counter",
+              "frame": {
+                "title": "Recommendations given",
+                "showTitle": true
+              },
+              "encodings": {
+                "value": {
+                  "fieldName": "given_total",
+                  "displayName": "Given",
+                  "format": {
+                    "type": "number-plain",
+                    "abbreviation": "none",
+                    "decimalPlaces": {
+                      "type": "max",
+                      "places": 0
+                    }
+                  }
+                }
+              },
+              "data": {
+                "queryName": "main"
+              }
+            }
+          },
+          "position": {
+            "x": 7,
+            "y": 15,
+            "width": 5,
+            "height": 3
+          }
+        },
+        {
+          "widget": {
+            "name": "counter_recs_received",
+            "queries": [
+              {
+                "name": "main",
+                "query": {
+                  "datasetName": "linkedin_recommendations",
+                  "fields": [
+                    {
+                      "name": "received_total",
+                      "expression": "SUM(`received_total`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "counter",
+              "frame": {
+                "title": "Recommendations received",
+                "showTitle": true
+              },
+              "encodings": {
+                "value": {
+                  "fieldName": "received_total",
+                  "displayName": "Received",
+                  "format": {
+                    "type": "number-plain",
+                    "abbreviation": "none",
+                    "decimalPlaces": {
+                      "type": "max",
+                      "places": 0
+                    }
+                  }
+                }
+              },
+              "data": {
+                "queryName": "main"
+              }
+            }
+          },
+          "position": {
+            "x": 7,
+            "y": 18,
+            "width": 5,
+            "height": 3
+          }
+        }
+      ],
+      "pageType": "PAGE_TYPE_CANVAS",
+      "layoutVersion": "GRID_V1"
+    }
+  ],
+  "uiSettings": {
+    "theme": {
+      "widgetHeaderAlignment": "ALIGNMENT_UNSPECIFIED"
+    },
+    "applyModeEnabled": false
+  }
+}

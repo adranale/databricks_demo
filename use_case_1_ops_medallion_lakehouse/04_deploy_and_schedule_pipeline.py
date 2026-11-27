@@ -11,12 +11,13 @@
 
 # COMMAND ----------
 
+# DBTITLE 1,Deploy pipeline and schedule
 from databricks.sdk import WorkspaceClient
 from databricks.sdk.service import pipelines, jobs
 
 w = WorkspaceClient()
 current_user = w.current_user.me().user_name
-workspace_folder = f"/Users/{current_user}/databricks_demo"
+workspace_folder = f"/Users/{current_user}/databricks_demo/use_case_1_ops_medallion_lakehouse"
 
 dlt_notebook_path = f"{workspace_folder}/02_pipeline_dlt_bronze_to_gold"
 merge_notebook_path = f"{workspace_folder}/03_pipeline_sql_merge_bronze_to_gold"
